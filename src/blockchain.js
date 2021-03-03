@@ -116,7 +116,7 @@ class Blockchain {
             let elapsedTime = currentTime-messageTime;
             let signedMessage = bitcoinMessage.verify(message, address, signature)
             
-            if(elapsedTime<3000 && signedMessage) {    
+            if(elapsedTime<300 && signedMessage) {    
                 let data = {address: address, message: message, signature: signature, star: star}
                 let block = new BlockClass.Block(data);
                 self._addBlock(block);
