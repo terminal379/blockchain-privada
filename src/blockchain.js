@@ -14,14 +14,6 @@ const bitcoinMessage = require('bitcoinjs-message');
 
 class Blockchain {
 
-    /**
-     * Constructor of the class, you will need to setup your chain array and the height
-     * of your chain (the length of your chain array).
-     * Also everytime you create a Blockchain class you will need to initialized the chain creating
-     * the Genesis Block.
-     * The methods in this class will always return a Promise to allow client applications or
-     * other backends to call asynchronous functions.
-     */
     constructor() {
         this.chain = [];
         this.height = -1;
@@ -71,8 +63,15 @@ class Blockchain {
            }
            block.hash = SHA256(JSON.stringify(block)).toString();
            self.height = self.chain.length;
-           resolve(self.chain.push(block));
-           reject('Error: block could not be added');
+           
+           let errors = await self.validateChain()
+
+            if(errors.length === 0) {       
+                resolve(self.chain.push(block));   
+            } 
+            else {
+                resolve('Error: block could not be added');
+            }
         });
     }
 
@@ -193,13 +192,23 @@ class Blockchain {
         let self = this;
         let errorLog = [];
         return new Promise(async (resolve, reject) => {
-            self.chain.forEach(m => {
-                m.validate().then ( (valid) => {
-                    if(valid===false) {
-                        errorLog.push(m);
+            
+            self.chain.forEach(async block => {
+                let prevBlockHash = self.chain[block.height-1];
+
+                if(await block.validate()) {
+                    
+                    // skip Genesis block validation for previous hash
+                    if(block.height>0 && block.previousBlockHash !==prevBlockHash) {
+                        errorLog.push({error: 'Hash of previous block does not match'});    
                     }
-                });
+                    
+                } else {
+                    errorLog.push({error: 'Block validation failed'})
+                }
+                
             });
+
             resolve(errorLog);
         });
     }

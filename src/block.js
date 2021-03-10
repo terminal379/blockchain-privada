@@ -47,7 +47,7 @@ class Block {
             // Comparing if the hashes changed
             if(currentHash !== reCalculatedHash) {
                 // Returning the Block is not valid
-                reject(false)
+                resolve(false)
             }
             
             else {
